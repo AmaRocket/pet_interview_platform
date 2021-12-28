@@ -3,6 +3,9 @@
 
 {% block app_content %}
 
+<button type="button-dark" class="btn btn-outline-dark"><a href="{{ url_for('add_grade') }}"><h2>Add Grade</h2></a></button>
+
+
 <h1>Grades</h1>
 
 <div class="row">
@@ -11,6 +14,8 @@
             {{ object }}
             <br>
         {% endfor %}
+
+
 
         <!--buttons for listing-->
             <nav aria-label="...">
@@ -27,6 +32,7 @@
                     </li>
                 </ul>
             </nav>
+
     </div>
 </div>
 {% endblock %}

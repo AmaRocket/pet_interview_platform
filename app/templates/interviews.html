@@ -3,32 +3,84 @@
 
 {% block app_content %}
 
-<h1>Interviews</h1>
+<button type="button-dark" class="btn btn-outline-dark"><a href="{{ url_for('add_interview') }}"><h2>Add Interview</h2>
+</a></button>
+
+<button class="btn btn-outline-light" type="button-dark"><a href="{{ url_for('my_interviews') }}"><h2>My Interviews</h2></a></button>
+
+
+<h1>Interviews:</h1>
 
 <div class="row">
     <div class="col-md-4">
-            {% for interview in current_user.interview %}
-            {{ interview }}
-            <br>
+
+
+        <ul>
+            {% for interview in interview %}
+            <hr>
+            <div class="alert alert-dark">
+                <li>
+                    <h3>{{ interview.candidate_name }}</h3>
+                    Final grade:
+                    {% if interview.get_result_grade() %}
+                    <div class="badge badge-success">
+                        {{ interview.get_result_grade() }}%
+                    </div>
+                    {% else %}
+                    <div class="badge badge-dark">
+                        Not completed
+                    </div>
+                    {% endif %} <br>
+                    Interviewers:
+                    <ul>
+                        {% for interviewer in interview.interviewers %}
+                        <li>{{ interviewer }}</li>
+                        {% endfor %}
+                    </ul>
+                    Questions:
+                    <ul>
+                        {% for question in interview.question_list %}
+                        <li>{{ question }}</li>
+                        {% endfor %}
+                    </ul>
+                    Interview date:
+                    <ul>
+                        <li> {{ interview.date }}</li>
+                    </ul>
+                    Interview time:
+                    <ul>
+                        <li>{{ interview.time }}</li>
+                    </ul>
+                    Link:
+                    <ul>
+                        <li>{{interview.link}}</li>
+                    </ul>
+                    {% if current_user.is_authenticated and current_user.admin == True %}
+                    <a href="/interviews/{{interview.id}}/delete">
+                        <button class="btn btn-danger">Delete</button>
+                    </a>
+                    {% endif %}
+                </li>
+            </div>
             {% endfor %}
+        </ul>
 
 
-            <!--buttons for listing-->
-            <nav aria-label="...">
-                <ul class="pager">
-                    <li class="previous{% if not prev_url %} disabled{% endif %}">
-                        <a href="{{ prev_url or '#' }}">
-                            <span aria-hidden="true">&larr;</span> New Interviews
-                        </a>
-                    </li>
-                    <li class="next{% if not next_url %} disabled{% endif %}">
-                        <a href="{{ next_url or '#' }}">
-                            Older Interviews <span aria-hidden="true">&rarr;</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+        <!--buttons for listing-->
+        <nav aria-label="...">
+            <ul class="pager">
+                <li class="previous{% if not prev_url %} disabled{% endif %}">
+                    <a href="{{ prev_url or '#' }}">
+                        <span aria-hidden="true">&larr;</span> New Interviews
+                    </a>
+                </li>
+                <li class="next{% if not next_url %} disabled{% endif %}">
+                    <a href="{{ next_url or '#' }}">
+                        Older Interviews <span aria-hidden="true">&rarr;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </div>
-</div>
 
-{% endblock %}
+    {% endblock %}

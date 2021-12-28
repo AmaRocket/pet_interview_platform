@@ -90,9 +90,9 @@ class InterviewForm(FlaskForm):
         super().__init__(*args, **kwargs)
 
     candidate_name = StringField('Candidate Name:', validators=[DataRequired()])
-    question_list = SelectMultipleField('Choose Questions (Use CTRL/Command For Choose Many Questions):',
+    question_list = SelectMultipleField('Choose Questions (Use CTRL/Command For Choose Many Questions)',
                                         choices=Question.get_selection_list())
-    interviewers = SelectMultipleField('Choose Interviewers (Use CTRL/Command For Choose Many Interviewers):',
+    interviewers = SelectMultipleField('Choose Interviewers (Use CTRL/Command For Choose Many Interviewers)',
                                        choices=User.get_selection_list())
     link = StringField('Enter Link For Interview Call')
     date = DateField('Date of Interview')
@@ -122,3 +122,10 @@ class GradeForm(FlaskForm):
         form.question_list.choices = Question.get_selection_list()
         form.interviews.choices = Interview.get_selection_list()
         return form
+
+
+class GradeRateForm(FlaskForm):
+    rate_picks = [
+        (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9), (10, 10)
+    ]
+    grade = SelectField("Choose Questions", choices=rate_picks)

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+
+
+<div class="container-fluid">
+  <!-- Content here -->
+
+<h1>Rate answer on the question "{{question.question_description}}"</h1>
+    <h4>Max grade: {{question.max_grade}}</h4>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.grade.label }}<br>
+            {{ form.grade}}
+
+            {% for error in form.grade.errors %}
+                <span style="color: red;">*{{ error }}*</span>
+            {% endfor %}
+        </p>
+        <p><button class="btn btn-light" type="submit">Submit</button></p>
+    </form>
+
+</div>
+
+
+{% endblock %}

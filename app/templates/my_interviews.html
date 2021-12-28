@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="container-fluid">
+    <h3>My Interviews:</h3>
+        <ul>
+        {% for i in list_interview %}
+            <hr>
+            <div class="alert alert-dark">
+                <li>
+                <h3>{{ i.candidate_name }}</h3>
+                    Final grade:
+                    {% if i.get_result_grade() %}
+                    <div class="badge badge-success">
+                        {{ i.get_result_grade() }}%
+                    </div>
+                {% else %}
+                    <div class="badge badge-dark">
+                        Not completed
+                    </div>
+                {% endif %} <br>
+                    Interviewers:
+                    <ul>
+                    {% for interviewer in i.interviewers %}
+                        <li>{{ interviewer }}</li>
+                    {% endfor %}
+                    </ul>
+                    Questions:
+                    <ul>
+                    {% for question in i.question_list %}
+                        <li>{{ question }}</li>
+                    {% endfor %}
+                    </ul>
+                    Interview Date:
+                    <ul>
+                        <li>{{ i.date }}</li>
+                    </ul>
+                    Interview Time:
+                    <ul>
+                        <li>{{ i.time }}</li>
+                    </ul>
+                    {% if current_user.is_authenticated and current_user.admin %}
+                    <a href="/all-interviews/{{i.id}}/delete"><button class="btn btn-danger" type="delete">Delete</button></a>
+                    {% endif %}
+                    <a href="/my-interviews/{{i.id}}"><button class="btn btn-light" type="submit">Details</button></a>
+                </li>
+            </div>
+        {% endfor %}
+        </ul>
+</div>
+
+
+{% endblock %}

@@ -7,9 +7,32 @@
         <div class="col-md-4">
 
             {% for object in query %}
-            {{ object }}
+            <hr>
+
+            <div class="alert alert-dark">
+            <li><h5>Username: {{ object.username}}, Admin: {{ object.admin }}</h5><br>
+                <a href="/user/{{object.username}}/delete"><button class="btn btn-danger">Delete</button></a></li>
+            </div>
             <br>
             {% endfor %}
+             <nav aria-label="...">
+        <ul class="pager">
+            <li class="previous{% if not prev_url %} disabled{% endif %}">
+                <a href="{{ prev_url or '#' }}">
+                    <span aria-hidden="true">&larr;</span> New
+                </a>
+            </li>
+
+
+            <li class="next{% if not next_url %} disabled{% endif %}">
+                <a href="{{ next_url or '#' }}">
+                    Old <span aria-hidden="true">&rarr;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
         </div>
     </div>
+
 {% endblock %}

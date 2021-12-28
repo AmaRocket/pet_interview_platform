@@ -164,7 +164,7 @@ class Interview(db.Model):
                                    lazy='subquery')
 
     def __repr__(self):
-        return f'{self.candidate_name} {self.result_grade}'
+        return f'{self.candidate_name}'
 
     @staticmethod
     def get_selection_list():
@@ -172,6 +172,45 @@ class Interview(db.Model):
         for i in Interview.query.all():
             result.append((f"{i.id}", f"{i.candidate_name}"))
         return result
+
+    def get_max_score(self):
+        max_score = 0
+        for q in self.question_list:
+            max_score += q.max_grade
+        return max_score
+
+    def get_count_interviewers(self):
+        count_interviewers = 0
+        for i in self.get_selection_list():
+            count_interviewers += 1
+        return count_interviewers
+
+    def get_count_questions(self):
+        count_questions = 0
+        for q in self.question_list:
+            count_questions += 1
+        return count_questions
+
+    def get_result_grade(self):
+        max_score = self.get_max_score()
+        count_users = self.get_count_interviewers()
+        count_questions = self.get_count_questions()
+        user_grade = 0
+        count_votes = 0
+        check_full = False
+
+        # list_grade = []
+        for i in Grade.query.filter_by(interview_id=self.id):
+            # list_grade.append(i.grade)
+            if i.grade:
+                user_grade += i.grade
+                count_votes += 1
+            if count_votes == count_users * count_questions:
+                check_full = True
+
+            if check_full:
+                res = (user_grade / count_users) / max_score * 100
+                return round(res, 2)
 
     # def avatar(self, size):  # function for default avatar Gravatar
     #     digest = md5(self.email.lower().encode('utf-8')).hexdigest()
@@ -181,16 +220,16 @@ class Interview(db.Model):
 
 class Grade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    interview_id = db.Column(db.Integer, db.ForeignKey('interview.id'))
-    question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
-    interviewer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    interview_id = db.Column(db.Integer, db.ForeignKey('interview.id', ondelete='CASCADE'))
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id', ondelete='CASCADE'))
+    interviewer_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     grade = db.Column(db.Integer, default=0)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
     """ RELATIONS """
-    interview = db.relationship("Interview", backref="grade")
-    question = db.relationship("Question", backref="grade")
-    interviewer = db.relationship("User", backref="grade")
+    interview = db.relationship("Interview", backref="grade", cascade="all,delete")
+    question = db.relationship("Question", backref="grade", cascade="all,delete")
+    interviewer = db.relationship("User", backref="grade", cascade="all,delete")
 
     def __repr__(self):
         return f"{self.interviewer}   rated    {self.interview} - {self.grade}, for {self.question}"

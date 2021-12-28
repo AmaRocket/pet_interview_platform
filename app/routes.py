@@ -1,7 +1,8 @@
 from flask import render_template, flash, redirect, url_for, request
 from werkzeug.urls import url_parse
 from app import app, db, login
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, UserForm, QuestionForm, InterviewForm, GradeForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, UserForm, QuestionForm, InterviewForm, GradeForm, \
+    GradeRateForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Post, Question, Interview, Grade
 from datetime import datetime
@@ -73,7 +74,7 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-
+# Hide From Users
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -82,7 +83,7 @@ def register():
 
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data,
-                    admin=True)
+                    admin=True)  # Set ADMIN=TRUE For Create Admin On Start
         user.set_password(form.password.data)
 
         db.session.add(user)
@@ -99,6 +100,7 @@ def register():
 @app.route('/user/<username>')
 @login_required
 def user(username):
+
     user = User.query.filter_by(username=username).first_or_404()
     page = request.args.get('page', 1, type=int)
     posts = user.posts.order_by(Post.timestamp.desc()).paginate(
@@ -135,7 +137,8 @@ def edit_profile():
 def users():
     form = UserForm
     query = User.query.all()
-    return render_template('users.html', query=query, form=form)
+
+    return render_template('users.html', query=query, form=form, user=user)
 
 
 @app.route('/add-user', methods=['GET', 'POST'])
@@ -153,6 +156,22 @@ def add_user():
         flash("User Added")
         return redirect('/add-user')
     return render_template('add_user.html', title='Add-User', form=form)
+
+#---------------------NEW------------------
+@app.route('/users/<username>/delete', methods=['POST', 'GET'])
+@login_required
+def user_delete(username):
+    if current_user.is_authenticated and current_user.admin == True:
+        try:
+            user = User.query.filter_by(username=username).first_or_404()
+            db.session.delete(user)
+            db.session.commit()
+            flash('User removed')
+            return redirect(url_for('user'))
+        except:
+            return 'Error'
+    else:
+        return redirect(url_for('permission_denied'))
 
 
 # ----------------last seen---------------------------------------------------------------------------------------------
@@ -218,6 +237,7 @@ def unfollow(username):
 @app.route('/questions')
 @login_required
 def questions():
+    form = QuestionForm()
     page = request.args.get('page', 1, type=int)
     questions = Question.query.order_by(Question.timestamp.desc()).paginate(
         page, app.config['QUESTION_PER_PAGE'], False)
@@ -226,7 +246,7 @@ def questions():
     prev_url = url_for('questions', page=questions.prev_num) \
         if questions.has_prev else None
     return render_template('questions.html', questions=questions.items, title="Questions", next_url=next_url,
-                           prev_url=prev_url)
+                           prev_url=prev_url, form=form)
 
 
 @app.route('/add-question', methods=["GET", "POST"])
@@ -246,15 +266,30 @@ def add_question():
     return render_template('_add_question.html', form=form)
 
 
+@app.route('/questions/<id>/delete', methods=['POST', 'GET'])
+def question_delete(id):
+    if current_user.is_authenticated and current_user.admin == True:
+        try:
+            question = Question.query.filter_by(id=id).first_or_404()
+            db.session.delete(question)
+            db.session.commit()
+            flash('Question removed')
+            return redirect(url_for('all_questions'))
+        except:
+            return render_template('404.html')
+    else:
+        return render_template('404.html')
+
+
 @app.route('/interviews')
 @login_required
 def interviews():
     page = request.args.get('page', 1, type=int)
     interview = Interview.query.order_by(Interview.timestamp.desc()).paginate(
         page, app.config['INTERVIEW_PER_PAGE'], False)
-    next_url = url_for('interview', page=interview.next_num) \
+    next_url = url_for('interviews', page=interview.next_num) \
         if interview.has_next else None
-    prev_url = url_for('interview', page=interview.prev_num) \
+    prev_url = url_for('interviews', page=interview.prev_num) \
         if interview.has_prev else None
     return render_template("interviews.html", title='Interview', interview=interview.items,
                            next_url=next_url, prev_url=prev_url)
@@ -276,6 +311,10 @@ def add_interview():
         interview = Interview(candidate_name=form.candidate_name.data,
                               question_list=question_list,
                               interviewers=interviewers,
+                              date=form.date.data,
+                              time=form.time.data,
+                              link=form.link.data,
+                              short_description=form.short_description.data
                               )
         all_objects = [interview]
         for user in interviewers:
@@ -287,16 +326,52 @@ def add_interview():
                 )
                 all_objects.append(grade)
         db.session.add_all(all_objects)
-
         db.session.commit()
         flash('Interview Created Successfuly')
-        return redirect('/add-interview')
+        return redirect(url_for('interviews'))
     return render_template('_add_interview.html', form=form)
+
+
+@app.route('/interviews/<id>/delete', methods=['POST', 'GET'])
+@login_required
+def interview_delete(id):
+    if current_user.is_authenticated and current_user.admin == True:
+        try:
+            interview = Interview.query.filter_by(id=id).first_or_404()
+            db.session.delete(interview)
+            db.session.commit()
+            flash('Interview removed')
+            return redirect(url_for('interviews'))
+        except:
+            return render_template('404.html')
+    else:
+        return render_template('404.html')
+
+
+@app.route('/my-interviews')
+@login_required
+def my_interviews():
+    interviews = Interview.query.all()
+    list_interview = []
+    for interview in interviews:
+        if current_user in interview.interviewers:
+            list_interview.append(interview)
+    return render_template('my_interviews.html', list_interview=list_interview, interviews=interviews)
+
+
+@app.route('/my-interviews/<id>', methods=['GET','POST'])
+def interview_detail(id):
+    interview = Interview.query.filter_by(id=id).first_or_404()
+    grades = Grade.query.filter_by(interview_id=id)
+    interview.result_grade = interview.get_result_grade()
+    db.session.commit()
+    return render_template('interview_detail.html', interview=interview, grades=grades)
 
 
 @app.route('/grades')
 @login_required
 def grades():
+    form = GradeForm()
     page = request.args.get('page', 1, type=int)
     grade = Grade.query.order_by(Grade.timestamp.desc()).paginate(
         page, app.config['GRADE_PER_PAGE'], False)
@@ -304,7 +379,7 @@ def grades():
         if grade.has_next else None
     prev_url = url_for('grades', page=grade.prev_num) \
         if grade.has_prev else None
-    return render_template("grades.html", title='Grade', grade=grade.items,
+    return render_template("grades.html", title='Grade', grade=grade.items, form=form,
                            next_url=next_url, prev_url=prev_url)
 
 
@@ -312,7 +387,6 @@ def grades():
 @login_required
 def add_grade():
     form = GradeForm().new()
-
     if form.validate_on_submit():
         user = User.query.filter_by(id=form.interviewers.data).first()
         interview = Interview.query.filter_by(id=form.interviews.data).first()
@@ -320,37 +394,41 @@ def add_grade():
 
         grade = Grade(
             interviewer=user,
+            # interviewer=current_user,
             question=question,
             interview=interview,
+            # grade=1
             grade=form.grade.data
         )
 
         db.session.add(grade)
 
-        max = 0
-        got = 0
-        for question in interview.question_list:
-            try:
-                max += question.max_grade
-                got += question.grade
-            except:
-                pass
-        if got >= max:
-            got = totalmax
-        for grade in interview.grade:
-            got += grade.grade
-        print(f'total {got} \n max: {max}')
-        result_grade = got / max / (len(interview.interviewers) +1 ) / 10
-        print(result_grade)
-        interview.result_grade = result_grade
-        db.session.commit()
-    else:
-        print(form.errors)
-
-
-
+        interview.result_grade = interview.get_result_grade()
         db.session.commit()
         flash('Grade Added Successfuly')
-        #return redirect('/add-grade')
+        return redirect(url_for('my_interviews'))
+
+
     return render_template('_add_grade.html', form=form)
 
+
+@app.route('/my-interviews/<id>/rate/<question_id>', methods=["POST", "GET"])
+@login_required
+
+def rate_question(id, question_id):
+    form = GradeRateForm()
+    question = Question.query.filter_by(id=question_id).first_or_404()
+    if form.validate_on_submit():
+        grade_select = Grade.query.filter_by(question_id=question_id,
+                                             interview_id=id,
+                                             interviewer_id=current_user.id).first_or_404()
+        if 0 < int(form.grade.data) <= int(grade_select.question.max_grade):
+            grade_select.grade = form.grade.data
+            # db.session.add(result_grade)
+            print(grade_select)
+
+            db.session.commit()
+        else:
+            flash("You gave it more points than the question deserves. Try again. ")
+        return redirect(f'/my-interviews/{id}')
+    return render_template('rate_question.html', form=form, question=question)

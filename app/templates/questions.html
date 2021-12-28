@@ -2,29 +2,49 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-    <h1>Questions</h1>
-    <div class="row">
-        <div class="col-md-4">
-            {% for object in questions %}
-            {{ object }}
-            <br>
-            {% endfor %}
 
-            <!--buttons for listing-->
-                <nav aria-label="...">
-                    <ul class="pager">
-                        <li class="previous{% if not prev_url %} disabled{% endif %}">
-                            <a href="{{ prev_url or '#' }}">
-                                <span aria-hidden="true">&larr;</span> New Questions
-                            </a>
-                        </li>
-                        <li class="next{% if not next_url %} disabled{% endif %}">
-                            <a href="{{ next_url or '#' }}">
-                                Older Questions <span aria-hidden="true">&rarr;</span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-        </div>
+<button type="button-dark" class="btn btn-outline-dark"><a href="{{ url_for('add_question') }}"><h2>Add Question</h2></a></button>
+
+
+<h1>Questions</h1>
+<div class="row">
+    <div class="col-md-4">
+        <ul>
+        {% for question in questions %}
+            <hr>
+            <div class="alert alert-dark">
+                <li>
+                <h3>{{ question.short_description }}</h3>
+                Question: {{ question.question_description }}<br>
+                Answer: {{ question.answer}}<br>
+                Max grade: {{ question.max_grade }} <br>
+                    {% if current_user.admin == True %}
+                <a href="/question/{{ question.id }}/delete"><button class="btn btn-danger">Delete</button></a>
+                    {% endif %}
+                </li>
+            </div>
+        {% endfor %}
+        </ul>
+
+        <!--buttons for listing-->
+        <nav aria-label="...">
+            <ul class="pager">
+                <li class="previous{% if not prev_url %} disabled{% endif %}">
+                    <a href="{{ prev_url or '#' }}">
+                        <span aria-hidden="true">&larr;</span> New Questions
+                    </a>
+                </li>
+                <li class="next{% if not next_url %} disabled{% endif %}">
+                    <a href="{{ next_url or '#' }}">
+                        Older Questions <span aria-hidden="true">&rarr;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <br>
+        <br>
+
+
     </div>
+</div>
 {% endblock %}

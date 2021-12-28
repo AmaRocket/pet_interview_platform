@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-center">
+        <h3>Interview {{ interview.candidate_name }}</h3>
+    </div>
+    <div class="alert alert-dark">
+        <div class="badge badge-dark">
+            <h5>Interviewers:</h5>
+            <ul>
+                {% for interviewer in interview.interviewers %}
+                <li>{{ interviewer }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <h4>Questions:</h4>
+        <ul>
+            {% for question in interview.question_list %}
+            <div class="badge badge-success">
+                Max grade: {{ question.max_grade }}
+            </div>
+            <li><h5>{{ question.question_description }}</h5></li>
+            <ul>
+                <li>{{ question.question_description }}</li>
+                {% if question.answer %}
+                <li><i>Expected answer: {{ question.answer }}</i></li>
+                {% endif %}
+                <b>Grades:</b>
+                <a href="/my-interviews/{{ interview.id }}/rate/{{ question.id }}">
+<!--                <a href="{{ url_for('add_grade') }}">-->
+                    <button class="btn btn-outline-danger">Rate It</button>
+                </a>
+                {% for mark in grade %}
+                {% if mark.question_id == question.id and mark.grade %}
+                <ul>
+                    <div class="badge badge-warning">
+                        <li>{{ mark }} (<b>{{mark.grade}}</b>)</li>
+                    </div>
+                </ul>
+                {% endif %}
+                {% endfor %}
+            </ul>
+            {% endfor %}
+        </ul>
+        Interview Date:
+        <ul>
+            <li>{{ interview.date }}</li>
+        </ul>
+        Interview Time:
+        <ul>
+            <li>{{ interview.time }}</li>
+        </ul>
+        <b>Final Grade:</b>
+        {% if interview.get_result_grade() %}
+        <div class="badge badge-success">
+            {{ interview.get_result_grade() }}%
+        </div>
+        {% else %}
+        <div class="badge badge-danger">
+            Not completed
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}
