@@ -74,6 +74,7 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+
 # Hide From Users
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -100,7 +101,6 @@ def register():
 @app.route('/user/<username>')
 @login_required
 def user(username):
-
     user = User.query.filter_by(username=username).first_or_404()
     page = request.args.get('page', 1, type=int)
     posts = user.posts.order_by(Post.timestamp.desc()).paginate(
@@ -157,7 +157,8 @@ def add_user():
         return redirect('/add-user')
     return render_template('add_user.html', title='Add-User', form=form)
 
-#---------------------NEW------------------
+
+
 @app.route('/users/<username>/delete', methods=['POST', 'GET'])
 @login_required
 def user_delete(username):
@@ -267,18 +268,20 @@ def add_question():
 
 
 @app.route('/questions/<id>/delete', methods=['POST', 'GET'])
+@login_required
 def question_delete(id):
     if current_user.is_authenticated and current_user.admin == True:
         try:
             question = Question.query.filter_by(id=id).first_or_404()
             db.session.delete(question)
             db.session.commit()
-            flash('Question removed')
-            return redirect(url_for('all_questions'))
+            flash('Question Removed')
+            return redirect(url_for('questions'))
         except:
             return render_template('404.html')
     else:
         return render_template('404.html')
+
 
 
 @app.route('/interviews')
@@ -359,7 +362,7 @@ def my_interviews():
     return render_template('my_interviews.html', list_interview=list_interview, interviews=interviews)
 
 
-@app.route('/my-interviews/<id>', methods=['GET','POST'])
+@app.route('/my-interviews/<id>', methods=['GET', 'POST'])
 def interview_detail(id):
     interview = Interview.query.filter_by(id=id).first_or_404()
     grades = Grade.query.filter_by(interview_id=id)
@@ -408,13 +411,11 @@ def add_grade():
         flash('Grade Added Successfuly')
         return redirect(url_for('my_interviews'))
 
-
     return render_template('_add_grade.html', form=form)
 
 
 @app.route('/my-interviews/<id>/rate/<question_id>', methods=["POST", "GET"])
 @login_required
-
 def rate_question(id, question_id):
     form = GradeRateForm()
     question = Question.query.filter_by(id=question_id).first_or_404()

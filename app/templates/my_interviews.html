@@ -43,7 +43,7 @@
                     {% if current_user.is_authenticated and current_user.admin %}
                     <a href="/all-interviews/{{i.id}}/delete"><button class="btn btn-danger" type="delete">Delete</button></a>
                     {% endif %}
-                    <a href="/my-interviews/{{i.id}}"><button class="btn btn-light" type="submit">Details</button></a>
+                    <a href="/my-interviews/{{i.id}}"><button type="button" class="btn btn-secondary btn-lg btn-block">Details</button></a>
                 </li>
             </div>
         {% endfor %}

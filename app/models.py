@@ -212,10 +212,10 @@ class Interview(db.Model):
                 res = (user_grade / count_users) / max_score * 100
                 return round(res, 2)
 
-    # def avatar(self, size):  # function for default avatar Gravatar
-    #     digest = md5(self.email.lower().encode('utf-8')).hexdigest()
-    #     return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
-    #         digest, size)
+    def avatar(self, size):  # function for default avatar Gravatar
+        digest = md5(self.email.lower().encode('utf-8')).hexdigest()
+        return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
+            digest, size)
 
 
 class Grade(db.Model):
@@ -227,9 +227,9 @@ class Grade(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
     """ RELATIONS """
-    interview = db.relationship("Interview", backref="grade", cascade="all,delete")
-    question = db.relationship("Question", backref="grade", cascade="all,delete")
-    interviewer = db.relationship("User", backref="grade", cascade="all,delete")
+    interview = db.relationship("Interview", backref="grade")
+    question = db.relationship("Question", backref="grade")
+    interviewer = db.relationship("User", backref="grade")
 
     def __repr__(self):
         return f"{self.interviewer}   rated    {self.interview} - {self.grade}, for {self.question}"
