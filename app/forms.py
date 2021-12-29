@@ -63,6 +63,8 @@ class UserForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
+# -----------------------------------------------------------------------------------------------------------------------
+
 class EmptyForm(FlaskForm):
     submit = SubmitField('Submit')
 
@@ -94,6 +96,7 @@ class InterviewForm(FlaskForm):
                                         choices=Question.get_selection_list())
     interviewers = SelectMultipleField('Choose Interviewers (Use CTRL/Command For Choose Many Interviewers)',
                                        choices=User.get_selection_list())
+
     link = StringField('Enter Link For Interview Call')
     date = DateField('Date of Interview')
     time = TimeField('Time of Interview')
@@ -108,24 +111,26 @@ class InterviewForm(FlaskForm):
         return form
 
 
-class GradeForm(FlaskForm):
-    interviewers = SelectField('Choose Interviewers:', choices=User.get_selection_list())
-    interviews = SelectField('Choose Interview:', choices=Interview.get_selection_list())
-    question_list = SelectField('Choose Questions:', choices=Question.get_selection_list())
-    grade = IntegerField('Choose Grade', validators=[DataRequired(), NumberRange(min=0, max=10)], default=10)
-    submit = SubmitField('Submit')
-
-    @classmethod
-    def new(cls):
-        form = cls()
-        form.interviewers.choices = User.get_selection_list()
-        form.question_list.choices = Question.get_selection_list()
-        form.interviews.choices = Interview.get_selection_list()
-        return form
+# class GradeForm(FlaskForm):
+#     interviewers = SelectField('Choose Interviewers:', choices=User.get_selection_list())
+#     interviews = SelectField('Choose Interview:', choices=Interview.get_selection_list())
+#     question_list = SelectField('Choose Questions:', choices=Question.get_selection_list())
+#     grade = IntegerField('Choose Grade', validators=[DataRequired(), NumberRange(min=0, max=10)], default=10)
+#     submit = SubmitField('Submit')
+#
+#     @classmethod
+#     def new(cls):
+#         form = cls()
+#         form.interviewers.choices = User.get_selection_list()
+#         form.question_list.choices = Question.get_selection_list()
+#         form.interviews.choices = Interview.get_selection_list()
+#         return form
 
 
 class GradeRateForm(FlaskForm):
+
     rate_picks = [
         (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9), (10, 10)
     ]
     grade = SelectField("Choose Questions", choices=rate_picks)
+    # submit = SubmitField('Submit')

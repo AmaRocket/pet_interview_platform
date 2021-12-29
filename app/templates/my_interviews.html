@@ -5,6 +5,10 @@
 <div class="container-fluid">
     <h3>My Interviews:</h3>
         <ul>
+            {% if list_interview|length == 0 %}
+            <h5>No any interview yet.</h5>
+        {% else %}
+            {% endif %}
         {% for i in list_interview %}
             <hr>
             <div class="alert alert-dark">

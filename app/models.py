@@ -5,6 +5,7 @@ from datetime import datetime
 
 from wtforms import ValidationError
 
+import interview
 from app import db, app
 from app import login
 
@@ -177,18 +178,21 @@ class Interview(db.Model):
         max_score = 0
         for q in self.question_list:
             max_score += q.max_grade
+        print('max rate', max_score)
         return max_score
 
     def get_count_interviewers(self):
         count_interviewers = 0
-        for i in self.get_selection_list():
+        for i in self.interviewers:
             count_interviewers += 1
+        print('count interviewers', count_interviewers)
         return count_interviewers
 
     def get_count_questions(self):
         count_questions = 0
         for q in self.question_list:
             count_questions += 1
+        print('count questions', count_questions)
         return count_questions
 
     def get_result_grade(self):
@@ -197,44 +201,45 @@ class Interview(db.Model):
         count_questions = self.get_count_questions()
         user_grade = 0
         count_votes = 0
-        check_full = False
+        check_full = True
 
-        # list_grade = []
         for i in Grade.query.filter_by(interview_id=self.id):
-            # list_grade.append(i.grade)
             if i.grade:
                 user_grade += i.grade
+                print(user_grade, 'user grade')
                 count_votes += 1
-            if count_votes == count_users * count_questions:
-                check_full = True
+                print(count_votes, 'count votes')
+        if count_votes == count_users * count_questions:
+            check_full = True
 
-            if check_full:
-                res = (user_grade / count_users) / max_score * 100
-                return round(res, 2)
+        if check_full:
+            res = user_grade / count_users / max_score * 100
+            print('result', res)
 
-    def avatar(self, size):  # function for default avatar Gravatar
-        digest = md5(self.email.lower().encode('utf-8')).hexdigest()
-        return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
-            digest, size)
+            return round(res, 2)
+
+
+
+
+    # def avatar(self, size):  # function for default avatar Gravatar
+    #     digest = md5(self.email.lower().encode('utf-8')).hexdigest()
+    #     return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
+    #         digest, size)
 
 
 class Grade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    interview_id = db.Column(db.Integer, db.ForeignKey('interview.id', ondelete='CASCADE'))
-    question_id = db.Column(db.Integer, db.ForeignKey('question.id', ondelete='CASCADE'))
-    interviewer_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    interview_id = db.Column(db.Integer, db.ForeignKey('interview.id'))
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+    interviewer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     grade = db.Column(db.Integer, default=0)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
+
     """ RELATIONS """
-    interview = db.relationship("Interview", backref="grade")
-    question = db.relationship("Question", backref="grade")
-    interviewer = db.relationship("User", backref="grade")
+    interview = db.relationship('Interview', backref='grade', cascade='all, delete')
+    question = db.relationship('Question', backref='grade', cascade='all, delete')
+    interviewer = db.relationship('User', backref='grade', cascade='all, delete')
 
     def __repr__(self):
         return f"{self.interviewer}   rated    {self.interview} - {self.grade}, for {self.question}"
-
-    def max_grade(question, grade):
-        max_grade = Question.query.filter_by(id=question.data.get('question')).first().max_grade
-        if grade.data > max_grade:
-            raise ValidationError('Grade bigger that maximum for this question')

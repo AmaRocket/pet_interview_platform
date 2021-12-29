@@ -19,7 +19,7 @@
                 Answer: {{ question.answer}}<br>
                 Max grade: {{ question.max_grade }} <br>
                     {% if current_user.admin == True %}
-                <a href="/question/{{ question.id }}/delete"><button class="btn btn-danger">Delete</button></a>
+                <a href="/questions/{{ question.id }}/delete"><button class="btn btn-danger">Delete</button></a>
                     {% endif %}
                 </li>
             </div>

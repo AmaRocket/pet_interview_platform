@@ -1,7 +1,9 @@
 from flask import render_template, flash, redirect, url_for, request
 from werkzeug.urls import url_parse
+
+import interview
 from app import app, db, login
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, UserForm, QuestionForm, InterviewForm, GradeForm, \
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, UserForm, QuestionForm, InterviewForm,\
     GradeRateForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Post, Question, Interview, Grade
@@ -138,7 +140,7 @@ def users():
     form = UserForm
     query = User.query.all()
 
-    return render_template('users.html', query=query, form=form, user=user)
+    return render_template('users.html', query=query, form=form)
 
 
 @app.route('/add-user', methods=['GET', 'POST'])
@@ -159,7 +161,7 @@ def add_user():
 
 
 
-@app.route('/users/<username>/delete', methods=['POST', 'GET'])
+@app.route('/users/<username>/delete', methods=['GET', 'POST'])
 @login_required
 def user_delete(username):
     if current_user.is_authenticated and current_user.admin == True:
@@ -168,7 +170,7 @@ def user_delete(username):
             db.session.delete(user)
             db.session.commit()
             flash('User removed')
-            return redirect(url_for('user'))
+            return redirect(url_for('users'))
         except:
             return 'Error'
     else:
@@ -246,11 +248,11 @@ def questions():
         if questions.has_next else None
     prev_url = url_for('questions', page=questions.prev_num) \
         if questions.has_prev else None
-    return render_template('questions.html', questions=questions.items, title="Questions", next_url=next_url,
+    return render_template('questions.html', questions=questions.items, next_url=next_url,
                            prev_url=prev_url, form=form)
 
 
-@app.route('/add-question', methods=["GET", "POST"])
+@app.route('/add-question', methods=['GET', 'POST'])
 @login_required
 def add_question():
     form = QuestionForm()
@@ -267,7 +269,7 @@ def add_question():
     return render_template('_add_question.html', form=form)
 
 
-@app.route('/questions/<id>/delete', methods=['POST', 'GET'])
+@app.route('/questions/<id>/delete', methods=['GET', 'POST'])
 @login_required
 def question_delete(id):
     if current_user.is_authenticated and current_user.admin == True:
@@ -284,7 +286,7 @@ def question_delete(id):
 
 
 
-@app.route('/interviews')
+@app.route('/interviews', methods=['GET', 'POST'])
 @login_required
 def interviews():
     page = request.args.get('page', 1, type=int)
@@ -298,7 +300,18 @@ def interviews():
                            next_url=next_url, prev_url=prev_url)
 
 
-@app.route('/add-interview', methods=["GET", "POST"])
+@app.route('/my-interviews/<id>', methods=['GET', 'POST'])
+@login_required
+def interview_detail(id):
+    interview = Interview.query.filter_by(id=id).first_or_404()
+    grades = Grade.query.filter_by(interview_id=id)
+    db.session.commit()
+    return render_template('interview_detail.html', interview=interview, grades=grades)
+
+
+
+
+@app.route('/add-interview', methods=['GET', 'POST'])
 @login_required
 def add_interview():
     form = InterviewForm().new()
@@ -335,7 +348,7 @@ def add_interview():
     return render_template('_add_interview.html', form=form)
 
 
-@app.route('/interviews/<id>/delete', methods=['POST', 'GET'])
+@app.route('/interviews/<id>/delete', methods=['GET', 'POST'])
 @login_required
 def interview_delete(id):
     if current_user.is_authenticated and current_user.admin == True:
@@ -362,70 +375,25 @@ def my_interviews():
     return render_template('my_interviews.html', list_interview=list_interview, interviews=interviews)
 
 
-@app.route('/my-interviews/<id>', methods=['GET', 'POST'])
-def interview_detail(id):
-    interview = Interview.query.filter_by(id=id).first_or_404()
-    grades = Grade.query.filter_by(interview_id=id)
-    interview.result_grade = interview.get_result_grade()
-    db.session.commit()
-    return render_template('interview_detail.html', interview=interview, grades=grades)
 
 
-@app.route('/grades')
-@login_required
-def grades():
-    form = GradeForm()
-    page = request.args.get('page', 1, type=int)
-    grade = Grade.query.order_by(Grade.timestamp.desc()).paginate(
-        page, app.config['GRADE_PER_PAGE'], False)
-    next_url = url_for('grades', page=grade.next_num) \
-        if grade.has_next else None
-    prev_url = url_for('grades', page=grade.prev_num) \
-        if grade.has_prev else None
-    return render_template("grades.html", title='Grade', grade=grade.items, form=form,
-                           next_url=next_url, prev_url=prev_url)
 
 
-@app.route('/add-grade', methods=['POST', 'GET'])
-@login_required
-def add_grade():
-    form = GradeForm().new()
-    if form.validate_on_submit():
-        user = User.query.filter_by(id=form.interviewers.data).first()
-        interview = Interview.query.filter_by(id=form.interviews.data).first()
-        question = Question.query.filter_by(id=form.question_list.data).first()
-
-        grade = Grade(
-            interviewer=user,
-            # interviewer=current_user,
-            question=question,
-            interview=interview,
-            # grade=1
-            grade=form.grade.data
-        )
-
-        db.session.add(grade)
-
-        interview.result_grade = interview.get_result_grade()
-        db.session.commit()
-        flash('Grade Added Successfuly')
-        return redirect(url_for('my_interviews'))
-
-    return render_template('_add_grade.html', form=form)
-
-
-@app.route('/my-interviews/<id>/rate/<question_id>', methods=["POST", "GET"])
+@app.route('/my-interviews/<id>/rate/<question_id>', methods=['GET', 'POST'])
 @login_required
 def rate_question(id, question_id):
     form = GradeRateForm()
+    interview = Interview.query.filter_by(id=id).first_or_404()
     question = Question.query.filter_by(id=question_id).first_or_404()
     if form.validate_on_submit():
         grade_select = Grade.query.filter_by(question_id=question_id,
                                              interview_id=id,
-                                             interviewer_id=current_user.id).first_or_404()
+                                             interviewer_id=current_user.id
+                                             ).first_or_404()
         if 0 < int(form.grade.data) <= int(grade_select.question.max_grade):
             grade_select.grade = form.grade.data
-            # db.session.add(result_grade)
+
+            db.session.add(grade_select)
             print(grade_select)
 
             db.session.commit()
